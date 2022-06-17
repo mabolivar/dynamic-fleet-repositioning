@@ -1,0 +1,121 @@
+---
+title: "Simplified dynamic fleet repositioning"
+format: html
+editor: visual
+---
+
+
+### Mathematical formulation
+
+The following formulation is based on [Powell (2009)’s modelling framework](https://castlelab.princeton.edu/html/Papers/EORMS-ADP_Modeling_Dec72009.pdf) for
+dynamic programs. It is composed of the following elements:
+
+1. State variables - *What do we need to know at time t?*
+2. Decision variables - *What are our decisions at time $t$?*
+3. Constraints - *What constrain our decisions at time $t$?*
+4. Exogenous information - *What do we learn for the first time between t and t+1?*
+5. Transition function - *How does the problem evolve from t to t+1?*
+6. Objective function - *What are we minimizing/maximizing and how?*
+
+Let's see them in detail.
+
+#### Sets
+*Before defining the State variable, let's specify the sets:*
+
+* $T$: Set of decision periods in a day.
+* $L$: Set of locations in a city.
+* $L_l$: Set of neighbor locations for location $l \in L$.
+<!-- * $C$: Set of all possible couriers in time horizon $T$. -->
+<!-- * $O$: Set of all possible orders in time horizon $T$. -->
+
+#### State variable ($S_t$)
+*What do we need to know at time t?*
+
+$S_t=(R_t, D_t)$
+
+where
+
+* $R_{tl}$ takes the value of $1$ if a courier is idle at location $l \in L$ at time $t$. $0$, otherwise. $R_{t}=(R_{tl})_{ l \in L}$
+* $D_{tl}$ takes the value of $1$ if a new order with location $l \in L$ arose between $t-1$ and $t$. $0$, otherwise. $D_{t}=(D_{tl})_{l \in L}$
+
+
+#### Decision variables
+*What are our decisions at time $t$?*
+
+$$x_{tlk} = \begin{cases}
+  1 & \text{if courier in location } l \in L  \text{ is moved to location } k \in L_l \text{ at time } t. \\
+  0 & \text{otherwise.}
+\end{cases}
+$$
+
+#### Constraints ($\chi_t$)
+*What constrain our decisions at time $t$?*
+
+All couriers should be assign to a reachable location.
+
+::: {.column-margin}
+Note: While solving a greedy policy, we are only interested in the cases in which $R_{tl} = 1$. But, other cases are relevant to compute value functions.
+:::
+
+$$
+\sum_{k \in L_l}x_{tlk} = R_{tl} \qquad  \forall l \in L (\#eq:const1)
+$$
+Variable domain
+$$
+x_{tl} \in \{0, 1\} \qquad \forall l \in L (\#eq:const2)
+$$
+
+#### Exogenous information($W_{t+1}$)
+*What do we learn for the first time between t and t+1?*
+
+$W_{t+1} = (\hat{R}_t, \hat{D}_t)$
+
+where
+
+* $\hat{R}_{tl}$: Takes the value of 1 if a new or old idle courier arose at location $l \in L$ between $t-1$ and $t$.
+* $\hat{D}_{tl}$: Takes the value of 1 if a new order arose at location $l \in L$ between $t-1$ and $t$.
+
+#### Transition function ($S^M(.)$)
+*How does the problem evolve from t to t+1?*
+
+$$
+\begin{aligned}
+S_{t+1} &= S^M(S_t, x_t, W_{t+1}) \\
+        &= S^M(W_{t+1}) \\
+        &= (\hat{R}_{t+1},\hat{D}_{t+1}) 
+        = (R_{t+1},D_{t+1})
+\end{aligned}
+$$
+
+where $S^M(.)$ denotes the transition function and depends on the current state $S_t$, the decision vector $x_t$, and the exogenous information $W_{t+1}$. 
+
+However, in this problem it is assumed that between $t$ and $t+1$ couriers and orders aren't no longer available due they were already assigned, i.e. the resource availability and demand for $t+1$ depend only on exogenous factors. 
+
+::: {.column-margin}
+Note: It is possible to extend this model to also account for the assignment process and include a  *Resource transition function* and a *Demand transition function*.
+:::
+
+#### Objective function
+*What are we minimizing/maximizing and how?*
+
+In this problem, the objective is to minimize the summation of the expected total costs along $T$ decision periods (e.g. every 5 mins/day). This can be expressed as
+
+$$
+\min_{\pi \in \Pi}\sum_{t \in T}\mathbb{E}[C_t(S_t,X^\pi(S_{t-1}))]
+$$
+Where,
+
+* $X^\pi(S_t)$ is a policy that determines $x_t \in \chi_t$ given $S_t$.
+* $C_t(S_t,x_{t-1})$ is the total cost at time $t$
+* In $t = 0$, $C_t(S_t,x_{t-1}) = 0$.
+* For $t > 0$,
+$$
+C_t(S_t,x_{t-1}) = \sum_{l \in L}\sum_{k \in L_l}d^-_{tk}x_{t-1lk}
+$$
+
+* $d^-_{tk}$ is the distance between location $k \in L$ and the nearest order arose between $t-1$ and $t$.
+
+#### Next step
+
+Until this point, the mathematical formulation of the problem was presented but it was never defined *how to define our solution strategy ($X^\pi(S_t)$)*. The next section describes some alternative solution strategies and deep dives into two of them.
+
