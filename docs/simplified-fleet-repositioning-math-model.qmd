@@ -4,27 +4,6 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
-
 
 ### Mathematical formulation
 
@@ -73,7 +52,11 @@ $$
 *What constrain our decisions at time $t$?*
 
 All couriers should be assign to a reachable location.
-(Note: While solving a greedy policy, we are only interested in the cases in which $R_{tl} = 1$. But, other cases are relevant to compute value functions.)
+
+::: {.column-margin}
+Note: While solving a greedy policy, we are only interested in the cases in which $R_{tl} = 1$. But, other cases are relevant to compute value functions.
+:::
+
 $$
 \sum_{k \in L_l}x_{tlk} = R_{tl} \qquad  \forall l \in L (\#eq:const1)
 $$
@@ -109,7 +92,7 @@ where $S^M(.)$ denotes the transition function and depends on the current state 
 However, in this problem it is assumed that between $t$ and $t+1$ couriers and orders aren't no longer available due they were already assigned, i.e. the resource availability and demand for $t+1$ depend only on exogenous factors. 
 
 ::: {.column-margin}
-It is possible to extend this model to also account for the assignment process and include a  *Resource transition function* and a *Demand transition function*.
+Note: It is possible to extend this model to also account for the assignment process and include a  *Resource transition function* and a *Demand transition function*.
 :::
 
 #### Objective function
