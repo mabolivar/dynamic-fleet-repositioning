@@ -46,8 +46,8 @@ Let's see them in detail.
 * $T$: Set of decision periods in a day.
 * $L$: Set of locations in a city.
 * $L_l$: Set of neighbor locations for location $l \in L$.
-* $C$: Set of all possible couriers in time horizon $T$.
-* $O$: Set of all possible orders in time horizon $T$.
+<!-- * $C$: Set of all possible couriers in time horizon $T$. -->
+<!-- * $O$: Set of all possible orders in time horizon $T$. -->
 
 #### State variable ($S_t$)
 *What do we need to know at time t?*
@@ -56,15 +56,15 @@ $S_t=(R_t, D_t)$
 
 where
 
-* $R_{til}$ takes the value of $1$ if courier $i \in C$ is idle at location $l \in L$ at time $t$. $0$, otherwise. $R_{t}=(R_{til})_{i \in C, l \in L}$
-* $D_{tjl}$ takes the value of $1$ if a new order $j \in O$ with location $l \in L$ arose between $t-1$ and $t$. $0$, otherwise. $D_{t}=(D_{tjl})_{j \in O, l \in L}$
+* $R_{tl}$ takes the value of $1$ if a courier is idle at location $l \in L$ at time $t$. $0$, otherwise. $R_{t}=(R_{tl})_{ l \in L}$
+* $D_{tl}$ takes the value of $1$ if a new order with location $l \in L$ arose between $t-1$ and $t$. $0$, otherwise. $D_{t}=(D_{tl})_{l \in L}$
 
 
 #### Decision variables
 *What are our decisions at time $t$?*
 
-$$x_{til} = \begin{cases}
-  1 & \text{if courier } i \in C \text{ is moved to location } l \in L \text{ at time } t. \\
+$$x_{tlk} = \begin{cases}
+  1 & \text{if courier in location } l \in L  \text{ is moved to location } k \in L_l \text{ at time } t. \\
   0 & \text{otherwise.}
 \end{cases}
 $$
@@ -73,24 +73,24 @@ $$
 *What constrain our decisions at time $t$?*
 
 All couriers should be assign to a reachable location.
-(Note: While solving a greedy policy, we are only interested in the cases in which $R_til = 1$. But, other cases are relevant to compute value functions.)
+(Note: While solving a greedy policy, we are only interested in the cases in which $R_{tl} = 1$. But, other cases are relevant to compute value functions.)
 $$
-\sum_{k \in L_l}x_{tik} = R_{til} \qquad  \forall i \in C, l \in L (\#eq:const1)
+\sum_{k \in L_l}x_{tlk} = R_{tl} \qquad  \forall l \in L (\#eq:const1)
 $$
 Variable domain
 $$
-x_{til} \in \{0, 1\} \qquad \forall i \in C, l \in L (\#eq:const2)
+x_{tl} \in \{0, 1\} \qquad \forall l \in L (\#eq:const2)
 $$
 
 #### Exogenous information($W_{t+1}$)
 *What do we learn for the first time between t and t+1?*
 
-$W_{t+1} = (\hat{C}_t, \hat{O}_t)$
+$W_{t+1} = (\hat{R}_t, \hat{D}_t)$
 
 where
 
-* $\hat{C}_{til}$: Takes the value of 1 if a new courier arose at location $l \in L$ between $t-1$ and $t$.
-* $\hat{O}_{tl}$: Takes the value of 1 if a new order arose at location $l \in L$ between $t-1$ and $t$.
+* $\hat{R}_{tl}$: Takes the value of 1 if a new or old idle courier arose at location $l \in L$ between $t-1$ and $t$.
+* $\hat{D}_{tl}$: Takes the value of 1 if a new order arose at location $l \in L$ between $t-1$ and $t$.
 
 #### Transition function ($S^M(.)$)
 *How does the problem evolve from t to t+1?*
@@ -98,42 +98,39 @@ where
 $$
 \begin{aligned}
 S_{t+1} &= S^M(S_t, x_t, W_{t+1}) \\
-        &= (R_{t+1},\hat{D}_{t+1})
+        &= S^M(W_{t+1}) \\
+        &= (\hat{R}_{t+1},\hat{D}_{t+1}) 
+        = (R_{t+1},D_{t+1})
 \end{aligned}
 $$
 
 where $S^M(.)$ denotes the transition function and depends on the current state $S_t$, the decision vector $x_t$, and the exogenous information $W_{t+1}$. 
 
-This function states that $S_{t+1} = (R_{t+1},\hat{D}_{t+1})$ but to get to this expression we need to also define a how or resource (blood supply) $R_{t+1}$ evolves, i.e. the *Resource transition function*. In respect to the demand $\hat{D}_{t+1}$, there is no need to model its evolution due to it completely depends on exogenous factors.
+However, in this problem it is assumed that between $t$ and $t+1$ couriers and orders aren't no longer available due they were already assigned, i.e. the resource availability and demand for $t+1$ depend only on exogenous factors. 
 
-**Resource transition function**
-
-$$
-\begin{aligned}
-& R_{t+1} = (R_{t+1b'})_{b' \in B} \\
-& R_{t+1b'} = R_{tb'}^x + \hat{R}_{t+1b'} \\
-& R_{tb'}^x = f_R^T(x_{tbd^\phi})
-\end{aligned}
-$$
-
-where 
-$f_R^T(.)$ is the transition function between the number of units held as inventory ($d^\phi$) from type $b \in B$ to the next period’s updated type $b' \in B$. In our case, this model how the blood ages, i.e. blood age increases +1.
+::: {.column-margin}
+It is possible to extend this model to also account for the assignment process and include a  *Resource transition function* and a *Demand transition function*.
+:::
 
 #### Objective function
 *What are we minimizing/maximizing and how?*
 
-In this problem, the objective is to maximize the summation of the expected total contribution along $T$ weeks (periods). This can be expressed as
+In this problem, the objective is to minimize the summation of the expected total costs along $T$ decision periods (e.g. every 5 mins/day). This can be expressed as
 
 $$
-\max_{\pi \in \Pi}\sum_{t \in T}\mathbb{E}[C_t(S_t,X^\pi(S_t))]
+\min_{\pi \in \Pi}\sum_{t \in T}\mathbb{E}[C_t(S_t,X^\pi(S_{t-1}))]
 $$
 Where,
 
 * $X^\pi(S_t)$ is a policy that determines $x_t \in \chi_t$ given $S_t$.
-* $C_t(S_t,x_t)$ is the total contribution at time $t$.
+* $C_t(S_t,x_{t-1})$ is the total cost at time $t$
+* In $t = 0$, $C_t(S_t,x_{t-1}) = 0$.
+* For $t > 0$,
 $$
-C_t(S_t,x_t) = \sum_{b \in B}\sum_{d \in D}c_{bd}x_{tbd}
+C_t(S_t,x_{t-1}) = \sum_{l \in L}\sum_{k \in L_l}d^-_{tk}x_{t-1lk}
 $$
+
+* $d^-_{tk}$ is the distance between location $k \in L$ and the nearest order arose between $t-1$ and $t$.
 
 #### Next step
 
