@@ -1,12 +1,12 @@
 from source.utils import load_data, split_data
-
+from source.scenario import Scenario
 PARAMS = {'input_data_path': "./data/robotex5.csv", }
 
 if __name__ == '__main__':
     data = load_data(PARAMS['input_data_path'])
     train, test = split_data(data)
-    train_scenarios = generate_scenarios(train)
-    test_scenarios = generate_scenarios(test)
+    train_scenarios = Scenario.generate_scenarios(label="train", data=train)
+    test_scenarios = Scenario.generate_scenarios(label="test", data=test)
 
     policies_performance = [("policy", "scenario", "reward", "perfect_reward", "execution_secs")]
     for policy_name in PARAMS.get('policies', []):
