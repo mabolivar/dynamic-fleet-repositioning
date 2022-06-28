@@ -8,7 +8,7 @@ def get_orders(data: pd.DataFrame):
     # orders = data.to_dict(orient="index").values()
     # return sorted(orders, key=lambda x: x["time_seconds"])
     orders = data.sort_values(by="time_seconds").reset_index(drop=True).to_dict(orient="index").values()
-    return list(orders)
+    return list(orders)    # ToDo: couriers should be a numpy array (?)
 
 
 def get_couriers(data: pd.DataFrame):
@@ -23,7 +23,7 @@ def get_couriers(data: pd.DataFrame):
         .reset_index(drop=True)
         .to_dict(orient="index").values()
     )
-    return list(couriers)
+    return list(couriers)   # ToDo: couriers should be a numpy array (?)
 
 
 class Scenario:
@@ -37,3 +37,10 @@ class Scenario:
     def generate_scenarios(cls, label: str, data: pd.DataFrame):
         unique_dates = np.sort(data.start_date.unique())
         return [Scenario(i, label, data[lambda x: x.start_date == date]) for i, date in enumerate(unique_dates)]
+
+    def get_orders(self, epoch):
+        return self.orders[epoch] if epoch > 0 else None
+
+    def get_couriers(self, epoch):
+        return self.couriers[epoch]
+

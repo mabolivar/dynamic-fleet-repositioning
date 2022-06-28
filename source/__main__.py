@@ -1,6 +1,7 @@
 from source.utils import load_data, split_data
 from source.scenario import Scenario
-PARAMS = {'input_data_path': "./data/robotex5.csv", }
+PARAMS = {'input_data_path': "./data/robotex5.csv",
+          'policies': ['last_nearest_order']}
 
 if __name__ == '__main__':
     data = load_data(PARAMS['input_data_path'])
