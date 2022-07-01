@@ -17,21 +17,23 @@ class LastNearestOrder(Policy):
     def take_action(self, state: State):
         orders = state.orders
         couriers = state.couriers
-        self.get_nearest_order(orders, couriers)
+        return self.get_current_nearest_order(orders, couriers)
 
     @classmethod
-    def get_nearest_order(cls, orders, couriers):
+    def get_current_nearest_order(cls, orders, couriers):
+        if not orders:
+            return {
+                ix: {'lat': courier['lat'], 'lng': courier['lng']}
+                for ix, courier in enumerate(couriers)
+            }
         distance_array = haversine_distance(orders, orders, couriers, couriers)
         nearest_order = dict()
-        for j, courier_ix in enumerate(couriers):
-            nearest_order[courier_ix] = {None, 99999, None, None, None} # ToDO: write infinity (order_ix, value, lat,lng)
-            for i, order_ix in enumerate(orders):
+        for j, courier_id in enumerate(couriers):
+            nearest_order[courier_id] = {'order_id': None, 'distance': 99999, 'lat': None, 'lng': None} # ToDO: write infinity
+            for i, order_id in enumerate(orders):
                 d = distance_array(i * (len(orders)) + j)
-                if d < nearest_order[courier_ix][1]:
-                    nearest_order[courier_ix] = (order_ix, d, orders[order_ix]['lat'], orders[order_ix]['lng'])
-        return {
-            (order_ix, courier_ix):
-            for i, order_ix in enumerate(orders)
-            for j, courier_ix in enumerate(couriers)
-            }
+                if d < nearest_order[courier_id]['distance']:
+                    # ToDo: Don't allow long distance moves, i.e. compute max distance in the order direction
+                    nearest_order[courier_id] = {'order_id': order_id, 'distance': d, 'lat': orders[order_id]['lat'], 'lng': orders[order_id]['lng']}
+        return nearest_order
 
