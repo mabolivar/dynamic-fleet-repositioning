@@ -2,11 +2,18 @@ import numpy as np
 import pandas as pd
 
 DEFAULT_DELIVERY_DURATION_SECONDS = 20 * 60
+TIME_BUCKET_SIZE = '10min'
 
-# ToDo: Bucket orders and couriers by 5 mins
+# ToDo: Assuming that all hours do we have orders and couriers... this might be wrong
 def get_orders(data: pd.DataFrame):
-    orders = data.sort_values(by="time_seconds").reset_index(drop=True).to_dict(orient="index").values()
-    return list(orders)    # ToDo: couriers should be a numpy array (?)
+    orders = (data
+              .rename(columns={"start_lat": "lat", "start_lng": "lng"})
+              .sort_values(by="time_seconds")
+              .reset_index(drop=True)
+              .assign(ceil_startdatetime=lambda x: x.start_time.dt.ceil(TIME_BUCKET_SIZE))
+              .groupby('ceil_startdatetime')
+              )
+    return [list(orders.get_group(x).to_dict(orient="index").values()) for x in orders.groups]   # ToDo: couriers should be a numpy array (?)
 
 
 def get_couriers(data: pd.DataFrame):
@@ -19,9 +26,10 @@ def get_couriers(data: pd.DataFrame):
                 )
         .sort_values(by="time_seconds")
         .reset_index(drop=True)
-        .to_dict(orient="index").values()
+        .assign(ceil_startdatetime=lambda x: x.start_time.dt.ceil(TIME_BUCKET_SIZE))
+        .groupby('ceil_startdatetime')
     )
-    return list(couriers)   # ToDo: couriers should be a numpy array (?)
+    return [list(couriers.get_group(x).to_dict(orient="index").values()) for x in couriers.groups]   # ToDo: couriers should be a numpy array (?)
 
 
 class Scenario:

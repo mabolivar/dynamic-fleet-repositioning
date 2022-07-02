@@ -27,9 +27,9 @@ if __name__ == '__main__':
         for scenario in train_scenarios:
             solution = policy.train(scenario)
             sum_cost += solution['cost']
-            sum_gap += solution['gap']
+            # sum_gap += solution['gap']
             policies_performance.append(
-                (policy_name, scenario.label, solution.cost, scenario.perfect_cost, solution.execution_secs)
+                (policy_name, scenario.label, solution['cost'], scenario.perfect_cost, solution['execution_secs'])
             )
 
         print(f"Policy: {policy_name} | Avg. reward: {sum_cost/num_scenarios} | gap: {(sum_gap/num_scenarios * 100):.1f}%")

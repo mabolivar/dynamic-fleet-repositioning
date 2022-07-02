@@ -28,12 +28,17 @@ class LastNearestOrder(Policy):
             }
         distance_array = haversine_distance(orders, orders, couriers, couriers)
         nearest_order = dict()
-        for j, courier_id in enumerate(couriers):
-            nearest_order[courier_id] = {'order_id': None, 'distance': 99999, 'lat': None, 'lng': None} # ToDO: write infinity
-            for i, order_id in enumerate(orders):
-                d = distance_array(i * (len(orders)) + j)
-                if d < nearest_order[courier_id]['distance']:
+        for j, courier in enumerate(couriers):
+            nearest_order[j] = {'order_id': None, 'distance': 99999, 'lat': None, 'lng': None} # ToDO: write infinity
+            for i, order in enumerate(orders):
+                d = distance_array[(0, i + j * len(orders))]
+                if d < nearest_order[j]['distance']:
                     # ToDo: Don't allow long distance moves, i.e. compute max distance in the order direction
-                    nearest_order[courier_id] = {'order_id': order_id, 'distance': d, 'lat': orders[order_id]['lat'], 'lng': orders[order_id]['lng']}
+                    nearest_order[j] = {
+                        'order_id': i,
+                        'distance': d,
+                        'lat': order['lat'],
+                        'lng': order['lng']
+                    }
         return nearest_order
 
