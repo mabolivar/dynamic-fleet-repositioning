@@ -1,10 +1,11 @@
 from source.scenario import Scenario
 from source.utils import load_data, split_data
 from source.policies.last_nearest_order import LastNearestOrder
+from source.policies.do_nothing import DoNothing
 
 PARAMS = {
     'input_data_path': "./data/robotex5.csv",
-    'policies': ['last_nearest_order'],
+    'policies': ['do_nothing', 'last_nearest_order'],
     'minutes_bucket_size': 10,
     'courier_km_per_minute': 1.0,
 }
@@ -13,6 +14,8 @@ PARAMS = {
 def get_policy(name):
     if name == 'last_nearest_order':
         return LastNearestOrder
+    elif name == 'do_nothing':
+        return DoNothing
     else:
         raise ValueError('Unknown policy: {}'.format(name))
 
