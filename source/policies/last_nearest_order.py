@@ -53,8 +53,8 @@ class LastNearestOrder(Policy):
         movements = self.get_neighbours(start_lat, start_lng, precision=self.precision)
         order_exploited_cords, movement_exploited_cords = list(zip(*product([(end_lat, end_lng)], movements)))
         distance_array = haversine_distance(*zip(*order_exploited_cords), *zip(*movement_exploited_cords))
-        d = distance
-        best_move = start_lat, start_lng
+        d = float('inf')
+        best_move = None
         for i, move in enumerate(movements):
             if distance_array[i] < d:
                 best_move = move

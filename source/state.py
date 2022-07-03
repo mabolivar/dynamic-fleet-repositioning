@@ -16,7 +16,7 @@ class State:
         if not self.orders:
             return 0, dict()
         order_cords = [[order['lat'], order['lng']] for order in self.orders]
-        courier_cords = [[courier['lat'], courier['lng']] for courier in self.couriers]
+        courier_cords = [[action['lat'], action['lng']] for courier_id, action in actions.items()]
         order_exploited_cords, courier_exploited_cords = list(zip(*product(order_cords, courier_cords)))
         distance_array = haversine_distance(*zip(*order_exploited_cords), *zip(*courier_exploited_cords))
         nearest_order = dict()
