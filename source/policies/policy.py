@@ -22,12 +22,13 @@ class Policy:
         scenario_actions = []
         scenario_costs = []
         for epoch in range(scenario.epochs):
-            print(f"Scenario: {scenario.index} - Epoch: {epoch}")
             actions = self.take_action(state)
             cost, action_evaluation, state = state.update(scenario, actions)
             scenario_actions.append(action_evaluation)
             scenario_costs.append(cost)
+            print(f"Scenario: {scenario.index} - Epoch: {epoch} - Cost: {cost}")
         execution_secs = time.time() - now
+        print(f"Scenario: {scenario.index} - Execution time: {execution_secs} - Cost: {np.sum(scenario_costs)}")
         return {
             'cost': sum(scenario_costs),
             'actions': scenario_actions,
