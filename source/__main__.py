@@ -24,7 +24,7 @@ if __name__ == '__main__':
         policy = get_policy(policy_name)
         sum_cost, sum_gap = 0, 0
         num_scenarios = len(test_scenarios)
-        for scenario in train_scenarios:
+        for scenario in test_scenarios:
             solution = policy.train(scenario)
             sum_cost += solution['cost']
             # sum_gap += solution['gap']

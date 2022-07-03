@@ -1,13 +1,9 @@
-import numpy as np
-from source.policies.policy import Policy
+from itertools import product
 from source.state import State
+from source.policies.policy import Policy
+from source.utils import haversine_distance
+
 POLICY_NAME = 'LastNearestOrder'
-
-
-def haversine_distance(lat_1, lng_1, lat_2, lng_2):
-    size = len(lat_1) * len(lat_2)
-    # ToDo: Implement function
-    return np.ones(shape=(1, size)) * 100
 
 
 class LastNearestOrder(Policy):
@@ -26,12 +22,16 @@ class LastNearestOrder(Policy):
                 ix: {'lat': courier['lat'], 'lng': courier['lng']}
                 for ix, courier in enumerate(couriers)
             }
-        distance_array = haversine_distance(orders, orders, couriers, couriers)
+
+        order_cords = [[order['lat'], order['lng']] for order in orders]
+        courier_cords = [[courier['lat'], courier['lng']] for courier in couriers]
+        order_exploited_cords, courier_exploited_cords = list(zip(*product(order_cords, courier_cords)))
+        distance_array = haversine_distance(*zip(*order_exploited_cords), *zip(*courier_exploited_cords))
         nearest_order = dict()
         for j, courier in enumerate(couriers):
-            nearest_order[j] = {'order_id': None, 'distance': 99999, 'lat': None, 'lng': None} # ToDO: write infinity
+            nearest_order[j] = {'order_id': None, 'distance': float('inf'), 'lat': None, 'lng': None}
             for i, order in enumerate(orders):
-                d = distance_array[(0, i + j * len(orders))]
+                d = distance_array[(i + j * len(orders))]
                 if d < nearest_order[j]['distance']:
                     # ToDo: Don't allow long distance moves, i.e. compute max distance in the order direction
                     nearest_order[j] = {
