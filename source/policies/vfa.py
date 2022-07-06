@@ -12,13 +12,14 @@ def find_closest_order(couriers, orders):
     courier_cords = [[courier['lat'], courier['lng']] for courier in couriers]
     order_exploited_cords, courier_exploited_cords = list(zip(*product(order_cords, courier_cords)))
     distance_array = haversine_distance(*zip(*order_exploited_cords), *zip(*courier_exploited_cords))
-    nearest_order = dict()
+    nearest_order = defaultdict()
     for j, courier in enumerate(couriers):
-        nearest_order[j] = {'order_id': None, 'distance': float('inf'), 'lat': None, 'lng': None}
+        location = (courier['lat'], courier['lng'])
+        nearest_order[location] = {'distance': float('inf')}
         for i, order in enumerate(orders):
             d = distance_array[(i * len(couriers) + j)]
-            if d < nearest_order[j]['distance']:
-                nearest_order[(courier['lat'], courier['lng'])] = {
+            if d < nearest_order[location]['distance']:
+                nearest_order[location] = {
                     'order_id': i,
                     'distance': d,
                     'lat': order['lat'],
@@ -71,8 +72,11 @@ class VFA(Policy):
         # Value function update algorithm
         for location in nearest_orders:
             sampled_value = nearest_orders[location]['distance']
-            prev_value = self.V[prev_epoch].get(location, sampled_value)
-            self.V[prev_epoch][location] = (1-alpha) * prev_value + alpha * sampled_value
+            for epoch in [prev_epoch - 1, prev_epoch, prev_epoch + 1]:
+                if epoch < 0:
+                    continue
+                prev_value = self.V[epoch].get(location, sampled_value)
+                self.V[epoch][location] = (1-alpha) * prev_value + alpha * sampled_value
 
     def compute_movement_location(self, start_lat, start_lng):
         movements = self.get_neighbours(start_lat, start_lng, precision=self.precision)
