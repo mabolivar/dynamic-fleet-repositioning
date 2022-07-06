@@ -32,6 +32,20 @@ def couriers_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str):
     return [list(couriers.get_group(x).to_dict(orient="index").values()) for x in couriers.groups]   # ToDo: couriers should be a numpy array (?)
 
 
+def get_locations(data: pd.DataFrame, precision: int = 2):
+    locations = (
+        pd.concat([
+            data[["start_lat", "start_lng"]].rename(columns={"start_lat": "lat", "start_lng": "lng"}),
+            data[["end_lat", "end_lng"]].rename(columns={"end_lat": "lat", "end_lng": "lng"})
+            ])
+        .reset_index(drop=True)
+        .assign(lat=lambda x: x.lat.round(precision),
+                lng=lambda x: x.lng.round(precision))
+        .drop_duplicates()
+    )
+    return locations.to_dict(orient="records")
+
+
 class Scenario:
     def __init__(self, index: int, label: str, data: pd.DataFrame, minutes_bucket_size: int):
         self.index = index
@@ -40,6 +54,7 @@ class Scenario:
         self.orders = orders_df_to_bucket_list(data, time_bucket_size=str(self.minutes_bucket_size) + "min")
         self.couriers = couriers_df_to_bucket_list(data, time_bucket_size=str(self.minutes_bucket_size) + "min")
         self.epochs = len(self.orders)
+        self.locations = get_locations(data)
         self.perfect_cost = self.get_perfect_cost()
 
     @classmethod

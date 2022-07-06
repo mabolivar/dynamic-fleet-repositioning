@@ -1,7 +1,5 @@
 from itertools import product
 
-import numpy as np
-
 from source.state import State
 from source.policies.policy import Policy
 from source.utils import haversine_distance
@@ -37,7 +35,7 @@ class LastNearestOrder(Policy):
         for j, courier in enumerate(couriers):
             nearest_order[j] = {'order_id': None, 'distance': float('inf'), 'lat': None, 'lng': None}
             for i, order in enumerate(orders):
-                d = distance_array[(i + j * len(orders))]
+                d = distance_array[(i * len(couriers) + j)]
                 if d < nearest_order[j]['distance']:
                     # ToDo: Don't allow long distance moves, i.e. compute max distance in the order direction
                     move_lat, move_lng = self.compute_movement_location(courier['lat'], courier['lng'], order['lat'], order['lng'], d)

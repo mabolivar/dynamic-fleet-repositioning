@@ -1,17 +1,20 @@
 from itertools import product
+from copy import deepcopy
 from source.scenario import Scenario
 from source.utils import haversine_distance
+
 
 class State:
     def __init__(self, scenario: Scenario):
         self.scenario_ix = scenario.index
         self.epoch = 0
+        self.locations = scenario.locations
         # Orders arose between t-1 and t
         self.orders = scenario.get_orders(epoch=self.epoch - 1)
         # Couriers arose between t-1 and t
         self.couriers = scenario.get_couriers(epoch=self.epoch)
+        self.prev_actions = dict()
 
-    # ToDo: make it singleton
     def evaluate_cost_function(self, actions):
         if not self.orders:
             return 0, dict()
@@ -25,7 +28,7 @@ class State:
             nearest_order[courier_id] = {'order_id': None, 'distance': float('inf'), 'lat': None,
                                          'lng': None}
             for i, order in enumerate(self.orders):
-                d = distance_array[(i + j * len(self.orders))]
+                d = distance_array[(i * len(actions) + j)]
                 if d < nearest_order[courier_id]['distance']:
                     nearest_order[courier_id] = {
                         'order_id': actions[courier_id].get('order_id', None),
@@ -45,4 +48,5 @@ class State:
         self.orders = scenario.get_orders(epoch=self.epoch - 1)
         step_cost, nearest_order = self.evaluate_cost_function(actions)
         self.couriers = scenario.get_couriers(epoch=self.epoch) if self.epoch < scenario.epochs else None
+        self.prev_actions = deepcopy(actions)
         return step_cost, nearest_order, self   # ToDo: return new state instead of updated_state
