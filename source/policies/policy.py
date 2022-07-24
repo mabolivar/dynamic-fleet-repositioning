@@ -4,17 +4,13 @@ from source.scenario import Scenario
 from source.state import State
 
 
-def compute_precision(max_distance):
-    return 2 # ToDo: Compute precision based on max_distance (and therefore speed)
-
-
 class Policy:
     def __init__(self, **kwargs):
         self.name = kwargs.get('name', 'Policy')
         self.courier_km_per_minute = kwargs.get('courier_km_per_minute', 1.0)
         self.minutes_bucket_size = kwargs.get('minutes_bucket_size', 10)
         self.max_distance = self.courier_km_per_minute * self.minutes_bucket_size
-        self.precision = compute_precision(self.max_distance)
+        self.precision = kwargs.get('precision', 2)
         self.verbose = kwargs.get('verbose', False)
 
     def train(self, scenario: Scenario):
@@ -40,8 +36,8 @@ class Policy:
     def take_action(self, state: State):
         raise NotImplementedError
 
-    def get_neighbours(self, lat, lng, precision=2):
+    def get_neighbours(self, lat, lng):
         moves = [0, -1, 1]
-        scale = 10 ** precision
-        return [(round(lat + i / scale, precision), round(lng + j / scale, precision))
+        scale = 10 ** self.precision
+        return [(round(lat + i / scale, self.precision), round(lng + j / scale, self.precision))
                 for i in moves for j in moves]

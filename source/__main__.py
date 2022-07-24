@@ -9,6 +9,7 @@ PARAMS = {
     'policies': ['do_nothing', 'vfa', 'last_nearest_order'],
     'minutes_bucket_size': 10,
     'courier_km_per_minute': 1.0,
+    'precision': 2,
 }
 
 

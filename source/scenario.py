@@ -1,60 +1,31 @@
 import numpy as np
 import pandas as pd
+from source.utils import haversine_distance
 
+DEFAULT_PRECISION = 2
 DEFAULT_DELIVERY_DURATION_SECONDS = 20 * 60
 TIME_BUCKET_SIZE = '10min'
 
-# ToDo: Assuming that all hours do we have orders and couriers... this might be wrong
-def orders_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str):
-    orders = (data
-              .rename(columns={"start_lat": "lat", "start_lng": "lng"})
-              .sort_values(by="time_seconds")
-              .reset_index(drop=True)
-              .assign(ceil_startdatetime=lambda x: x.start_time.dt.ceil(time_bucket_size))
-              .groupby('ceil_startdatetime')
-              )
-    return [list(orders.get_group(x).to_dict(orient="index").values()) for x in orders.groups]   # ToDo: couriers should be a numpy array (?)
-
-
-def couriers_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str):
-    couriers = (
-        data
-        .drop(columns=["start_lat", "start_lng", "ride_value"])
-        .rename(columns={"end_lat": "lat", "end_lng": "lng"})
-        .assign(start_time=lambda x: x.start_time + pd.Timedelta(DEFAULT_DELIVERY_DURATION_SECONDS, "seconds"),
-                time_seconds=lambda x: x.time_seconds + DEFAULT_DELIVERY_DURATION_SECONDS
-                )
-        .sort_values(by="time_seconds")
-        .reset_index(drop=True)
-        .assign(ceil_startdatetime=lambda x: x.start_time.dt.ceil(time_bucket_size))
-        .groupby('ceil_startdatetime')
-    )
-    return [list(couriers.get_group(x).to_dict(orient="index").values()) for x in couriers.groups]   # ToDo: couriers should be a numpy array (?)
-
-
-def get_locations(data: pd.DataFrame, precision: int = 2):
-    locations = (
-        pd.concat([
-            data[["start_lat", "start_lng"]].rename(columns={"start_lat": "lat", "start_lng": "lng"}),
-            data[["end_lat", "end_lng"]].rename(columns={"end_lat": "lat", "end_lng": "lng"})
-            ])
-        .reset_index(drop=True)
-        .assign(lat=lambda x: x.lat.round(precision),
-                lng=lambda x: x.lng.round(precision))
-        .drop_duplicates()
-    )
-    return locations.to_dict(orient="records")
-
 
 class Scenario:
-    def __init__(self, index: int, label: str, data: pd.DataFrame, minutes_bucket_size: int):
+    def __init__(
+            self, index: int,
+            label: str,
+            data: pd.DataFrame,
+            minutes_bucket_size: int,
+            precision: int = DEFAULT_PRECISION
+            ):
         self.index = index
         self.label = label
         self.minutes_bucket_size = minutes_bucket_size
-        self.orders = orders_df_to_bucket_list(data, time_bucket_size=str(self.minutes_bucket_size) + "min")
-        self.couriers = couriers_df_to_bucket_list(data, time_bucket_size=str(self.minutes_bucket_size) + "min")
+        self.orders = orders_df_to_bucket_list(
+            data, time_bucket_size=str(self.minutes_bucket_size) + "min", precision=precision
+        )
+        self.couriers = couriers_df_to_bucket_list(
+            data, time_bucket_size=str(self.minutes_bucket_size) + "min", precision=precision
+        )
         self.epochs = len(self.orders)
-        self.locations = get_locations(data)
+        self.locations = get_locations(data, precision=precision)
         self.perfect_cost = self.get_perfect_cost()
         self.distance_map = self.get_distance_map()
 
@@ -92,3 +63,54 @@ class Scenario:
     def get_perfect_cost(self):
         # ToDo: implement this
         return None
+
+
+# ToDo: Assuming that all hours do we have orders and couriers... this might be wrong
+def orders_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precision: int):
+    orders = (
+        data
+        .rename(columns={"start_lat": "lat", "start_lng": "lng"})
+        .sort_values(by="time_seconds")
+        .reset_index(drop=True)
+        .assign(
+                ceil_startdatetime=lambda x: x.start_time.dt.ceil(time_bucket_size),
+                lat=lambda x: x.lat.round(precision),
+                lng=lambda x: x.lng.round(precision)
+        )
+        .groupby('ceil_startdatetime')
+    )
+    return [list(orders.get_group(x).to_dict(orient="index").values()) for x in orders.groups]   # ToDo: couriers should be a numpy array (?)
+
+
+def couriers_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precision: int):
+    couriers = (
+        data
+        .drop(columns=["start_lat", "start_lng", "ride_value"])
+        .rename(columns={"end_lat": "lat", "end_lng": "lng"})
+        .assign(start_time=lambda x: x.start_time + pd.Timedelta(DEFAULT_DELIVERY_DURATION_SECONDS, "seconds"),
+                time_seconds=lambda x: x.time_seconds + DEFAULT_DELIVERY_DURATION_SECONDS
+                )
+        .sort_values(by="time_seconds")
+        .reset_index(drop=True)
+        .assign(
+                ceil_startdatetime=lambda x: x.start_time.dt.ceil(time_bucket_size),
+                lat=lambda x: x.lat.round(precision),
+                lng=lambda x: x.lng.round(precision)
+        )
+        .groupby('ceil_startdatetime')
+    )
+    return [list(couriers.get_group(x).to_dict(orient="index").values()) for x in couriers.groups]   # ToDo: couriers should be a numpy array (?)
+
+
+def get_locations(data: pd.DataFrame, precision: int):
+    locations = (
+        pd.concat([
+            data[["start_lat", "start_lng"]].rename(columns={"start_lat": "lat", "start_lng": "lng"}),
+            data[["end_lat", "end_lng"]].rename(columns={"end_lat": "lat", "end_lng": "lng"})
+            ])
+        .reset_index(drop=True)
+        .assign(lat=lambda x: x.lat.round(precision),
+                lng=lambda x: x.lng.round(precision))
+        .drop_duplicates()
+    )
+    return locations.to_dict(orient="records")
