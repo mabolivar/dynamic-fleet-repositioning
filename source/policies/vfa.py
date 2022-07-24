@@ -79,7 +79,7 @@ class VFA(Policy):
                 self.V[epoch][location] = (1-alpha) * prev_value + alpha * sampled_value
 
     def compute_movement_location(self, start_lat, start_lng):
-        movements = self.get_neighbours(start_lat, start_lng, precision=self.precision)
+        movements = self.get_neighbours(start_lat, start_lng)
         d = float('inf')
         best_move = (start_lat, start_lng)
         for i, move in enumerate(movements):
