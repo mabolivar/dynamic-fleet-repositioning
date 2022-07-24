@@ -7,19 +7,16 @@ from source.utils import haversine_distance
 POLICY_NAME = 'VFA'
 
 
-def find_closest_order(couriers, orders):
-    order_cords = [[order['lat'], order['lng']] for order in orders]
-    courier_cords = [[courier['lat'], courier['lng']] for courier in couriers]
-    order_exploited_cords, courier_exploited_cords = list(zip(*product(order_cords, courier_cords)))
-    distance_array = haversine_distance(*zip(*order_exploited_cords), *zip(*courier_exploited_cords))
+def find_closest_order(couriers, orders, distance_map):
     nearest_order = defaultdict()
     for j, courier in enumerate(couriers):
-        location = (courier['lat'], courier['lng'])
-        nearest_order[location] = {'distance': float('inf')}
+        courier_location = (courier['lat'], courier['lng'])
+        nearest_order[courier_location] = {'distance': float('inf')}
         for i, order in enumerate(orders):
-            d = distance_array[(i * len(couriers) + j)]
-            if d < nearest_order[location]['distance']:
-                nearest_order[location] = {
+            order_lat, order_lng = order['lat'], order['lng']
+            d = distance_map[courier_location][(order_lat, order_lng)]
+            if d < nearest_order[courier_location]['distance']:
+                nearest_order[courier_location] = {
                     'order_id': i,
                     'distance': d,
                     'lat': order['lat'],
@@ -46,10 +43,10 @@ class VFA(Policy):
         prev_actions = state.prev_actions
         all_locations = state.locations
         self.epoch = state.epoch
-        actions = self.compute_actions(couriers)
+        actions = self.compute_actions(couriers, state.neighbours_map)
 
         if state.epoch > 0 and orders:
-            closest_order_per_location = find_closest_order(all_locations, orders)
+            closest_order_per_location = find_closest_order(all_locations, orders, state.distance_map)
 
             self.update_value_estimates(
                 prev_epoch=state.epoch - 1,
@@ -57,10 +54,10 @@ class VFA(Policy):
             )
         return actions
 
-    def compute_actions(self, couriers):
+    def compute_actions(self, couriers, neighbours_map):
         actions = {}
         for ix, courier in enumerate(couriers):
-            move_lat, move_lng = self.compute_movement_location(courier['lat'], courier['lng'])
+            move_lat, move_lng = self.compute_movement_location(courier['lat'], courier['lng'], neighbours_map)
             actions[ix] = {'lat': move_lat, 'lng': move_lng}
         return actions
 
@@ -78,8 +75,8 @@ class VFA(Policy):
                 prev_value = self.V[epoch].get(location, sampled_value)
                 self.V[epoch][location] = (1-alpha) * prev_value + alpha * sampled_value
 
-    def compute_movement_location(self, start_lat, start_lng):
-        movements = self.get_neighbours(start_lat, start_lng)
+    def compute_movement_location(self, start_lat, start_lng, neighbours_map):
+        movements = neighbours_map[(start_lat, start_lng)]
         d = float('inf')
         best_move = (start_lat, start_lng)
         for i, move in enumerate(movements):

@@ -35,10 +35,3 @@ class Policy:
 
     def take_action(self, state: State):
         raise NotImplementedError
-
-    def get_neighbours(self, lat, lng):
-        """ ToDo: Compute neighbours based on precision only once"""
-        moves = [0, -1, 1]
-        scale = 10 ** self.precision
-        return [(round(lat + i / scale, self.precision), round(lng + j / scale, self.precision))
-                for i in moves for j in moves]
