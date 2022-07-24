@@ -25,9 +25,12 @@ class Scenario:
             data, time_bucket_size=str(self.minutes_bucket_size) + "min", precision=precision
         )
         self.epochs = len(self.orders)
-        self.locations = get_locations(data, precision=precision)
-        self.perfect_cost = self.get_perfect_cost()
+        self.precision = precision
+        self.data_locations = get_locations(data, precision=self.precision)
+        self.neighbours_map = self.get_neighbours_map()
+        self.locations = self.get_all_locations()
         self.distance_map = self.get_distance_map()
+        self.perfect_cost = self.get_perfect_cost()
 
     @classmethod
     def generate_scenarios(cls, label: str, data: pd.DataFrame, minutes_bucket_size: int):
@@ -39,6 +42,30 @@ class Scenario:
 
     def get_couriers(self, epoch):
         return self.couriers[epoch]
+
+    def get_neighbours_map(self):
+        """
+        Returns a map of neighbours for each location.
+        :return: dict of dicts {source: [destinations]}
+        """
+        return {
+            (loc['lat'], loc['lng']): get_location_neighbours(loc['lat'], loc['lng'], self.precision)
+            for loc in self.data_locations
+        }
+
+    def get_all_locations(self):
+        neighbours_locations = [
+            {'lat': loc[0], 'lng': loc[1]}
+            for locations in list(self.neighbours_map.values())
+            for loc in locations
+        ]
+
+        locations = pd.DataFrame(
+            self.data_locations + neighbours_locations,
+            columns=["lat", "lng"]
+        ).drop_duplicates()
+
+        return locations.to_dict(orient="records")
 
     def get_distance_map(self):
         """
@@ -114,3 +141,17 @@ def get_locations(data: pd.DataFrame, precision: int):
         .drop_duplicates()
     )
     return locations.to_dict(orient="records")
+
+
+def get_location_neighbours(lat, lng, precision: int):
+    """
+    Returns a list of neighbours for a given location (including itself).
+    :param lat: latitude
+    :param lng: longitude
+    :param precision: The precision of the location coordinates.
+    :return: list of tuples (lat, lng)
+    """
+    moves = [0, -1, 1]
+    scale = 10 ** precision
+    return [(round(lat + i / scale, precision), round(lng + j / scale, precision))
+            for i in moves for j in moves]

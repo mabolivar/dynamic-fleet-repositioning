@@ -1,7 +1,5 @@
-from itertools import product
 from copy import deepcopy
 from source.scenario import Scenario
-from source.utils import haversine_distance
 
 
 class State:
@@ -14,6 +12,7 @@ class State:
         # Couriers arose between t-1 and t
         self.couriers = scenario.get_couriers(epoch=self.epoch)
         self.distance_map = scenario.distance_map
+        self.neighbours_map = scenario.neighbours_map
         self.prev_actions = dict()
 
     def evaluate_cost_function(self, actions):
