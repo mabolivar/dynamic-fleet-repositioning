@@ -56,6 +56,7 @@ class Scenario:
         self.epochs = len(self.orders)
         self.locations = get_locations(data)
         self.perfect_cost = self.get_perfect_cost()
+        self.distance_map = self.get_distance_map()
 
     @classmethod
     def generate_scenarios(cls, label: str, data: pd.DataFrame, minutes_bucket_size: int):
@@ -67,6 +68,26 @@ class Scenario:
 
     def get_couriers(self, epoch):
         return self.couriers[epoch]
+
+    def get_distance_map(self):
+        """
+        Returns a map of distances between locations.
+        :return: dict of dicts {source: {destination: distance}}
+        """
+        location_df = pd.DataFrame(self.locations, columns=["lat", "lng"])
+
+        distance_df = (
+            location_df
+            .merge(location_df, how='cross')
+            .assign(
+                source=lambda x: list(zip(x.lat_x, x.lng_x)),
+                target=lambda x: list(zip(x.lat_y, x.lng_y)),
+                distance=lambda x: haversine_distance(x.lat_x, x.lng_x, x.lat_y, x.lng_y)
+            )
+            [["source", "target", "distance"]]
+            .pivot(index="source", columns="target", values="distance")
+        )
+        return distance_df.to_dict(orient='index')
 
     def get_perfect_cost(self):
         # ToDo: implement this
