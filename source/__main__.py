@@ -1,15 +1,19 @@
+import os
+import csv
 from source.scenario import Scenario
 from source.utils import load_data, split_data
 from source.policies.last_nearest_order import LastNearestOrder
 from source.policies.do_nothing import DoNothing
 from source.policies.vfa import VFA
 
+OUTPUT_FOLDER = 'results'
 PARAMS = {
     'input_data_path': "./data/robotex5.csv",
     'policies': ['do_nothing', 'vfa', 'last_nearest_order'],
     'minutes_bucket_size': 10,
     'courier_km_per_minute': 1.0,
     'precision': 2,
+    'train': True,
 }
 
 
@@ -29,7 +33,7 @@ if __name__ == '__main__':
     train, test = split_data(data)
     train_scenarios = Scenario.generate_scenarios(
         label="train", data=train, minutes_bucket_size=PARAMS['minutes_bucket_size']
-    )
+    ) if PARAMS['train'] else []
     test_scenarios = Scenario.generate_scenarios(
         label="test", data=test, minutes_bucket_size=PARAMS['minutes_bucket_size']
     )
@@ -46,9 +50,12 @@ if __name__ == '__main__':
             policies_performance.append(
                 (policy_name, scenario.label, solution['cost'], scenario.perfect_cost, solution['execution_secs'])
             )
-
-        print(
-            f"Train -> Policy: {policy_name} | Avg. reward: {sum_cost / num_scenarios} | gap: {(sum_gap / num_scenarios * 100):.1f}%")
+        if PARAMS['train']:
+            print(
+                f"Train -> Policy: {policy_name} "
+                f"| Avg. reward: {sum_cost / num_scenarios} "
+                f"| gap: {(sum_gap / num_scenarios * 100):.1f}%"
+            )
 
         sum_cost, sum_gap = 0, 0
         num_scenarios = len(test_scenarios)
@@ -61,4 +68,17 @@ if __name__ == '__main__':
             )
 
         print(
-            f"Test -> Policy: {policy_name} | Avg. reward: {sum_cost / num_scenarios} | gap: {(sum_gap / num_scenarios * 100):.1f}%")
+            f"Test -> Policy: {policy_name} "
+            f"| Avg. reward: {sum_cost / num_scenarios} "
+            f"| gap: {(sum_gap / num_scenarios * 100):.1f}%"
+        )
+
+    # Export performance metrics
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    file_name = PARAMS['input_data_path'].split('/')[-1].split('.')[0]
+    output_file = f"{OUTPUT_FOLDER}/performance_{file_name}.csv"
+    with open(output_file, "w") as out:
+        csv_out = csv.writer(out, lineterminator='\n')
+        for row in policies_performance:
+            csv_out.writerow(row)
+    print(f"Performance metrics exported to {output_file}")

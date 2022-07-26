@@ -28,7 +28,7 @@ class Policy:
         execution_secs = time.time() - now
         print(f"Policy: {self.name} - Scenario: {scenario.index} - Execution time: {execution_secs} - Cost: {np.sum(scenario_costs)}")
         return {
-            'cost': sum(scenario_costs),
+            'cost': round(sum(scenario_costs), 2),
             'actions': scenario_actions,
             'execution_secs': execution_secs
             }
