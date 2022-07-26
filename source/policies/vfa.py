@@ -29,8 +29,7 @@ class VFA(Policy):
     def __init__(self, **kwargs):
         super(VFA, self).__init__(
             name=POLICY_NAME,
-            courier_km_per_minute=kwargs.get('courier_km_per_minute', 1.0),
-            minutes_bucket_size=kwargs.get('minutes_bucket_size', 10)
+            **kwargs,
         )
         epoch_in_minutes = range(0, 24 * 60, self.minutes_bucket_size)
         self.V = {t: defaultdict() for t, _ in enumerate(epoch_in_minutes)}
