@@ -6,14 +6,17 @@ from source.policies.last_nearest_order import LastNearestOrder
 from source.policies.do_nothing import DoNothing
 from source.policies.vfa import VFA
 
+INSTANCE_NAME = 'robotex5'
 OUTPUT_FOLDER = 'results'
 PARAMS = {
-    'input_data_path': "./data/robotex5.csv",
+    'instance_name': INSTANCE_NAME,
+    'input_data_path': f"./data/{INSTANCE_NAME}.csv",
     'policies': ['do_nothing', 'vfa', 'last_nearest_order'],
     'minutes_bucket_size': 10,
     'courier_km_per_minute': 1.0,
     'precision': 2,
     'train': True,
+    'export_policy_details': True,
 }
 
 
