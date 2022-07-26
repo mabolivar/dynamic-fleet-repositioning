@@ -1,7 +1,5 @@
-from itertools import product
 from copy import deepcopy
 from source.scenario import Scenario
-from source.utils import haversine_distance
 
 
 class State:
@@ -13,32 +11,32 @@ class State:
         self.orders = scenario.get_orders(epoch=self.epoch - 1)
         # Couriers arose between t-1 and t
         self.couriers = scenario.get_couriers(epoch=self.epoch)
+        self.distance_map = scenario.distance_map
+        self.neighbours_map = scenario.neighbours_map
         self.prev_actions = dict()
 
     def evaluate_cost_function(self, actions):
         if not self.orders:
             return 0, dict()
-        order_cords = [[order['lat'], order['lng']] for order in self.orders]
-        courier_cords = [[action['lat'], action['lng']] for courier_id, action in actions.items()]
-        order_exploited_cords, courier_exploited_cords = list(zip(*product(order_cords, courier_cords)))
-        distance_array = haversine_distance(*zip(*order_exploited_cords), *zip(*courier_exploited_cords))
         nearest_order = dict()
         total_cost = 0
         for j, courier_id in enumerate(actions):
+            action_lat, action_lng = actions[courier_id]['lat'], actions[courier_id]['lng']
             nearest_order[courier_id] = {'order_id': None, 'distance': float('inf'), 'lat': None,
                                          'lng': None}
             for i, order in enumerate(self.orders):
-                d = distance_array[(i * len(actions) + j)]
+                order_lat, order_lng = order['lat'], order['lng']
+                d = self.distance_map[(action_lat, action_lng)][(order_lat, order_lng)]
                 if d < nearest_order[courier_id]['distance']:
                     nearest_order[courier_id] = {
                         'order_id': actions[courier_id].get('order_id', None),
                         'distance': d,
                         'courier_lat': self.couriers[courier_id]['lat'],
                         'courier_lng': self.couriers[courier_id]['lng'],
-                        'action_lat': actions[courier_id]['lat'],
-                        'action_lng': actions[courier_id]['lng'],
-                        'order_lat': order['lat'],
-                        'order_lng': order['lng']
+                        'action_lat': action_lat,
+                        'action_lng': action_lng,
+                        'order_lat': order_lat,
+                        'order_lng': order_lng
                     }
             total_cost += nearest_order[courier_id]['distance']
         return total_cost, nearest_order
