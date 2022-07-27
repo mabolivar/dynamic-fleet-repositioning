@@ -78,7 +78,7 @@ df_best_move <- df %>%
       )
 
 ### Visualization -----------------
-
+# Vector plot
 to_plot <- df_best_move %>% 
   mutate(epoch = as.integer(epoch) * 10 / 60) %>% 
   filter(epoch %in% c(0, 13 * 6, 21 * 6), 
@@ -97,10 +97,27 @@ p <- ggplot(data = to_plot) +
 
 p
 
+# tile plot
+
+# Contour plot
+to_plot <- df %>% 
+  filter(as.integer(epoch) %% 100 == 0) %>% 
+  mutate(epoch = as.integer(epoch) * 10 / 60) %>% 
+  filter(instance == 'test',
+         scenario == 2) %>% 
+  semi_join(df_cords)
+
+ggplot(data = to_plot) +
+  geom_tile(aes(x=lng, y = lat, fill = value)) +
+  scale_fill_viridis_c(option = "B", direction = -1) +
+  facet_grid(epoch ~ .) +
+  theme_minimal()
+
 #### Animation ----------------------------
 library(gganimate)
 library(gifski)
 
+# Arrows
 to_plot <- df_best_move %>% 
   filter(as.integer(epoch) %% 1 == 0) %>% 
   mutate(epoch = as.integer(epoch) * 10 / 60) %>% 
@@ -126,4 +143,25 @@ an <- animate(p.animation, height = 500, width = 800, fps = 20, duration = 30,
               end_pause = 3, res = 100, renderer = gifski_renderer())
 anim_save("module1_30secs.gif", animation= an, path = 'animations')
 
+# Contour plot
+to_plot <- df %>% 
+  filter(as.integer(epoch) %% 1 == 0) %>% 
+  mutate(epoch = as.integer(epoch) * 10 / 60) %>% 
+  filter(instance == 'test',
+         scenario == 2) %>% 
+  semi_join(df_cords)
 
+
+p <- ggplot(data = to_plot) +
+  geom_tile(aes(x=lng, y = lat, fill = value)) +
+  scale_fill_viridis_c(option = "B", direction = -1) +
+  theme_minimal()
+
+p.animation = p +
+  transition_manual(epoch) +
+  labs(subtitle = "Epoch: {current_frame}")
+
+
+an <- animate(p.animation, height = 500, width = 800, fps = 20, duration = 10,
+              end_pause = 3, res = 100, renderer = gifski_renderer())
+anim_save("module1_hex10secs.gif", animation= an, path = 'animations')
