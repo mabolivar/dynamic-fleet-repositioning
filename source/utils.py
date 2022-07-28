@@ -10,6 +10,11 @@ def load_data(path="data/data.csv"):
     return (
         pd.read_csv(path, dtype=DTYPES)
         [lambda x: ~(x.start_lng.isna() | x.end_lng.isna())]
+        [lambda x: (x.end_lat > np.floor(np.quantile(x.start_lat, 0.001))) &
+                   (x.end_lng > np.floor(np.quantile(x.start_lng, 0.001))) &
+                   (x.end_lat < np.ceil(np.quantile(x.start_lat, 0.999))) &
+                   (x.end_lng < np.ceil(np.quantile(x.start_lng, 0.999)))
+        ]
         .assign(start_time=lambda x: pd.to_datetime(x.start_time, format='%Y-%m-%d %H:%M:%S', errors='coerce'),
                 start_date=lambda x: x.start_time.dt.date,
                 time_seconds=lambda x: (
