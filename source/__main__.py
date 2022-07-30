@@ -13,7 +13,6 @@ PARAMS = {
     'input_data_path': f"./data/{INSTANCE_NAME}.csv",
     'policies': ['do_nothing', 'vfa', 'last_nearest_order'],
     'minutes_bucket_size': 10,
-    'courier_km_per_minute': 1.0,
     'precision': 2,
     'train': True,
     'export_policy_details': True,
@@ -41,7 +40,9 @@ if __name__ == '__main__':
         label="test", data=test, minutes_bucket_size=PARAMS['minutes_bucket_size']
     )
 
-    policies_performance = [("policy", "scenario", "reward", "perfect_reward", "execution_secs")]
+    policies_performance = [
+        ("policy", "scenario", "reward", "perfect_reward", "gap", "execution_secs")
+    ]
     for policy_name in PARAMS.get('policies', []):
         policy = get_policy(policy_name)(**PARAMS)
         sum_cost, sum_gap = 0, 0
@@ -49,9 +50,10 @@ if __name__ == '__main__':
         for scenario in train_scenarios:
             solution = policy.train(scenario)
             sum_cost += solution['cost']
-            # sum_gap += solution['gap']
+            sum_gap += solution['gap']
             policies_performance.append(
-                (policy_name, scenario.label, solution['cost'], scenario.perfect_cost, solution['execution_secs'])
+                (policy_name, scenario.label, solution['cost'], scenario.perfect_cost,
+                 solution['gap'], solution['execution_secs'])
             )
         if PARAMS['train']:
             print(
@@ -65,9 +67,10 @@ if __name__ == '__main__':
         for scenario in test_scenarios:
             solution = policy.train(scenario)
             sum_cost += solution['cost']
-            # sum_gap += solution['gap']
+            sum_gap += solution['gap']
             policies_performance.append(
-                (policy_name, scenario.label, solution['cost'], scenario.perfect_cost, solution['execution_secs'])
+                (policy_name, scenario.label, solution['cost'], scenario.perfect_cost,
+                 solution['gap'], solution['execution_secs'])
             )
 
         print(

@@ -32,14 +32,22 @@ class Policy:
             if self.verbose:
                 print(f"Scenario: {scenario.index} - Epoch: {epoch} - Cost: {cost}")
         execution_secs = time.time() - now
-        print(f"Policy: {self.name} - Scenario: {scenario.index} - Execution time: {execution_secs} - Cost: {np.sum(scenario_costs)}")
+        print(
+            f"Policy: {self.name} - "
+            f"Scenario: {scenario.index} - "
+            f"Execution time: {execution_secs:.1f} - "
+            f"Cost: {np.sum(scenario_costs):.1f} - "
+            f"Perfect cost: {scenario.perfect_cost:.1f} - "
+            f"Gap: {(np.sum(scenario_costs) - scenario.perfect_cost) / scenario.perfect_cost * 100:.1f}%"
+        )
         if self.export_details:
             self.export_policy_as_dict(fname=f'{scenario.label}_{scenario.index}')
 
         return {
             'cost': round(sum(scenario_costs), 2),
             'actions': scenario_actions,
-            'execution_secs': execution_secs
+            'execution_secs': execution_secs,
+            'gap': round((sum(scenario_costs) - scenario.perfect_cost)/scenario.perfect_cost, 2)
             }
 
     def take_action(self, state: State):

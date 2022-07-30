@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from source.utils import haversine_distance
+from source.utils import haversine_distance, get_nearest_order_per_courier
 
 DEFAULT_PRECISION = 2
 DEFAULT_DELIVERY_DURATION_SECONDS = 20 * 60
@@ -30,7 +30,7 @@ class Scenario:
         self.neighbours_map = self.get_neighbours_map()
         self.locations = self.get_all_locations()
         self.distance_map = self.get_distance_map()
-        self.perfect_cost = self.get_perfect_cost()
+        self.perfect_cost, _ = self.get_perfect_solution()
 
     @classmethod
     def generate_scenarios(cls, label: str, data: pd.DataFrame, minutes_bucket_size: int):
@@ -38,7 +38,7 @@ class Scenario:
         return [Scenario(i, label, data[lambda x: x.start_date == date], minutes_bucket_size) for i, date in enumerate(unique_dates)]
 
     def get_orders(self, epoch):
-        return self.orders[epoch] if epoch > 0 else None
+        return self.orders[epoch] if epoch >= 0 else None
 
     def get_couriers(self, epoch):
         return self.couriers[epoch]
@@ -87,9 +87,25 @@ class Scenario:
         )
         return distance_df.to_dict(orient='index')
 
-    def get_perfect_cost(self):
-        # ToDo: implement this
-        return None
+    def get_perfect_solution(self):
+        """
+        Returns the perfect cost and solution for the scenario.
+        :return:
+        """
+        best_decisions = dict()
+        perfect_cost = 0
+        for epoch in range(self.epochs):
+            best_decisions[epoch] = dict()
+            orders = self.get_orders(epoch)
+            couriers = self.get_couriers(epoch)
+            if orders is None or couriers is None:
+                continue
+            best_decisions[epoch]['actions'] = get_nearest_order_per_courier(
+                orders, couriers, self.distance_map, self.neighbours_map
+            )
+            best_decisions[epoch]['cost'] = sum(v['distance'] for k, v in best_decisions[epoch]['actions'].items())
+            perfect_cost += best_decisions[epoch]['cost']
+        return perfect_cost, best_decisions
 
 
 # ToDo: Assuming that all hours do we have orders and couriers... this might be wrong
