@@ -103,17 +103,25 @@ p <- ggplot(data = to_plot) +
 
 p
 
-ggplot(data = to_plot) +
-  geom_point(aes(x=lng, y = lat, color=value), size = 1) +
+# Vector plot evolution
+to_plot <- df_best_move %>% 
+  mutate(epoch = as.integer(epoch)) %>% 
+  filter(epoch == 21 * 60 / 10)
+
+p <- ggplot(data = to_plot) +
+  geom_point(aes(x=lng, y = lat), size = 0.5) +
   geom_segment(
-    aes(x=lng, y = lat, xend=lng_p, yend=lat_p),
-    color='grey',
+    aes(x=lng, y = lat, xend=lng_p, yend=lat_p, color=value), 
     alpha = 0.5,
     arrow = arrow(length=unit(0.05,"cm"), ends="last", type = "closed")
   ) +
   scale_color_viridis_c(option = "B", direction = -1) +
+  facet_grid(instance ~ scenario) + 
   theme_minimal()
-xº
+
+p
+
+
 # Heatmap plot
 to_plot <- df %>% 
   filter(as.integer(epoch) %% 100 == 0) %>% 
