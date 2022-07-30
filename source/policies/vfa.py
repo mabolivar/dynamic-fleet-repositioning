@@ -68,7 +68,7 @@ class VFA(Policy):
         # Value function update algorithm
         for location in nearest_orders:
             sampled_value = nearest_orders[location]['distance']
-            for epoch in [prev_epoch - 1, prev_epoch, prev_epoch + 1]:
+            for epoch in [prev_epoch - 1, prev_epoch, prev_epoch + 1]:  # Idea - start updating multiples but then reduce it
                 if epoch < 0:
                     continue
                 prev_value = self.V[epoch].get(location, sampled_value)
