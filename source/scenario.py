@@ -108,7 +108,6 @@ class Scenario:
         return perfect_cost, best_decisions
 
 
-# ToDo: Assuming that all hours do we have orders and couriers... this might be wrong
 def orders_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precision: int):
     num_epochs = 24 * 60 // int(time_bucket_size[:-3])
     orders_per_epoch = [None] * num_epochs
@@ -130,12 +129,14 @@ def orders_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precisio
         .groupby('epoch')
     )
     for epoch in orders.groups.keys():
-        orders_per_epoch[epoch] = orders.get_group(epoch).to_dict(orient="index").values()
+        orders_per_epoch[epoch] = list(orders.get_group(epoch).to_dict(orient="index").values())
 
     return orders_per_epoch
 
-# ToDo: Assuming that all hours do we have orders and couriers... this might be wrong
+
 def couriers_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precision: int):
+    num_epochs = 24 * 60 // int(time_bucket_size[:-3])
+    couriers_per_epoch = [None] * num_epochs
     couriers = (
         data
         .drop(columns=["start_lat", "start_lng", "ride_value"])
@@ -146,13 +147,21 @@ def couriers_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precis
         .sort_values(by="time_seconds")
         .reset_index(drop=True)
         .assign(
-                ceil_startdatetime=lambda x: x.start_time.dt.ceil(time_bucket_size),
+                floor_startdatetime=lambda x: x.start_time.dt.floor(time_bucket_size),
+                floor_time_seconds=lambda x: (
+                    (x.floor_startdatetime - x.floor_startdatetime.dt.normalize()) / pd.Timedelta('1 second')
+                ).astype(int),
+                epoch=lambda x: (x.floor_time_seconds / 60 // int(time_bucket_size[:-3])).astype(int),
                 lat=lambda x: x.lat.round(precision),
                 lng=lambda x: x.lng.round(precision)
         )
-        .groupby('ceil_startdatetime')
+        .drop(columns=["floor_startdatetime", "floor_time_seconds"])
+        .groupby('epoch')
     )
-    return [list(couriers.get_group(x).to_dict(orient="index").values()) for x in couriers.groups]   # ToDo: couriers should be a numpy array (?)
+    for epoch in couriers.groups.keys():
+        couriers_per_epoch[epoch] = list(couriers.get_group(epoch).to_dict(orient="index").values())
+
+    return couriers_per_epoch
 
 
 def get_locations(data: pd.DataFrame, precision: int):
