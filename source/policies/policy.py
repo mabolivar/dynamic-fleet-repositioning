@@ -25,7 +25,7 @@ class Policy:
         scenario_actions = []
         scenario_costs = []
         for epoch in range(scenario.epochs):
-            actions = self.take_action(state)
+            actions = self.take_action(state) if state.couriers else None
             cost, action_evaluation, state = state.update(scenario, actions)
             scenario_actions.append(action_evaluation)
             scenario_costs.append(cost)
