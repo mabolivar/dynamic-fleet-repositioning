@@ -4,7 +4,7 @@ from itertools import product
 
 DTYPES = {'start_time': str, 'start_lat': 'float',
           'start_lng': 'float', 'end_lat': 'float',
-          'end_lng': 'float', 'ride_value': 'float'}
+          'end_lng': 'float'}
 
 
 def load_data(path="data/data.csv"):
@@ -79,7 +79,8 @@ def get_nearest_order_per_courier(orders, couriers, distance_map, neighbours_map
                 move_lat, move_lng, move_distance = compute_movement_location(courier_lat, courier_lng, order_lat, order_lng, neighbours_map)
                 nearest_order[j] = {
                     'order_id': i,
-                    'distance': move_distance,
+                    'distance': d,
+                    'move_distance': move_distance,
                     'lat': move_lat,
                     'lng': move_lng,
                 }

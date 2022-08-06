@@ -16,6 +16,7 @@ PARAMS = {
     'precision': 2,
     'train': True,
     'export_policy_details': True,
+    'verbose': False,
 }
 
 
@@ -80,11 +81,12 @@ if __name__ == '__main__':
         )
 
     # Export performance metrics
-    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-    file_name = PARAMS['input_data_path'].split('/')[-1].split('.')[0]
-    output_file = f"{OUTPUT_FOLDER}/performance_{file_name}.csv"
-    with open(output_file, "w") as out:
-        csv_out = csv.writer(out, lineterminator='\n')
-        for row in policies_performance:
-            csv_out.writerow(row)
-    print(f"Performance metrics exported to {output_file}")
+    if PARAMS['export_policy_details']:
+        os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+        file_name = PARAMS['input_data_path'].split('/')[-1].split('.')[0]
+        output_file = f"{OUTPUT_FOLDER}/performance_{file_name}.csv"
+        with open(output_file, "w") as out:
+            csv_out = csv.writer(out, lineterminator='\n')
+            for row in policies_performance:
+                csv_out.writerow(row)
+        print(f"Performance metrics exported to {output_file}")

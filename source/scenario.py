@@ -103,8 +103,18 @@ class Scenario:
             best_decisions[epoch]['actions'] = get_nearest_order_per_courier(
                 orders, couriers, self.distance_map, self.neighbours_map
             )
-            best_decisions[epoch]['cost'] = sum(v['distance'] for k, v in best_decisions[epoch]['actions'].items())
+            best_decisions[epoch]['cost'] = sum(v['move_distance'] for k, v in best_decisions[epoch]['actions'].items())
             perfect_cost += best_decisions[epoch]['cost']
+            if False:
+                print(f"Scenario: {self.index} - Epoch: {epoch} - Cost: {best_decisions[epoch]['cost']}")
+        print(
+            f"Policy: Perfect information - "
+            f"Scenario: {self.index} - "
+            f"Execution time: - - "
+            f"Cost: {perfect_cost:.1f} - "
+            f"Perfect cost: {perfect_cost:.1f} - "
+            f"Gap: 0%"
+        )
         return perfect_cost, best_decisions
 
 
@@ -139,7 +149,7 @@ def couriers_df_to_bucket_list(data: pd.DataFrame, time_bucket_size: str, precis
     couriers_per_epoch = [None] * num_epochs
     couriers = (
         data
-        .drop(columns=["start_lat", "start_lng", "ride_value"])
+        .drop(columns=["start_lat", "start_lng"])
         .rename(columns={"end_lat": "lat", "end_lng": "lng"})
         .assign(start_time=lambda x: x.start_time + pd.Timedelta(DEFAULT_DELIVERY_DURATION_SECONDS, "seconds"),
                 time_seconds=lambda x: x.time_seconds + DEFAULT_DELIVERY_DURATION_SECONDS

@@ -44,7 +44,7 @@ class State:
     def update(self, scenario, actions):
         self.epoch += 1
         self.orders = scenario.get_orders(epoch=self.epoch - 1)
-        step_cost, nearest_order = self.evaluate_cost_function(actions)
+        step_cost, nearest_order = self.evaluate_cost_function(actions) if actions else (0, dict())
         self.couriers = scenario.get_couriers(epoch=self.epoch) if self.epoch < scenario.epochs else None
         self.prev_actions = deepcopy(actions)
         return step_cost, nearest_order, self   # ToDo: return new state instead of updated_state
